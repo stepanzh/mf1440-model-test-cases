@@ -60,36 +60,42 @@ class Constellation:
     # like (self, count, groups, elements, state_eci)
 
     def __init__(self, nameCode):
-        self.totalSatCount = 0
-        self.groups   = []
-        self.elements = []
-        self.stateEci = []
+        # TODO. Why below are lists? Why not numpy arrays?
+
+        self.groups = None
+        self.totalSatCount = 0  # NOTE. Should be property based on self.groups
+
+        self.elements = None
+        self.stateEci = None
+
         self.loadFromConfig(nameCode)
 
     # TODO. Not pure. Better to have loader of Constellation from Json.
     # like
     #   constellation = ConstellationJsonLoader(data_dir).create_from_code(code)
 
-    def loadFromConfig(self, nameCode):
-        f = open('../ConstellationsTest.json')
-        jsonData = json.loads(f.read())
+    def loadFromConfig(self, nameCode: str):
+        assert self.groups is None, 'group of satellites was already loaded'
 
-        for entryIdx in range(len(jsonData)):
-            if (jsonData[entryIdx]['name']).lower() == nameCode.lower():
-                print("Загружена группировка " + nameCode)
-                constellationData = jsonData[entryIdx]
+        with open('../ConstellationsTest.json') as io:
+            jsonData = json.load(io)
 
-                for groupIdx in range(len(constellationData['Walkers'])):
-                    self.groups.append(WalkerGroup(*constellationData['Walkers'][groupIdx]))
-                    self.totalSatCount += self.groups[groupIdx].getTotalSatCount()
+        # Find first occurrence of constellation with nameCode
+        data = filter(lambda x: x['name'].lower() == nameCode.lower(), jsonData)
+        constellationData = next(data, None)
+        if constellationData is None:
+            raise Exception('Группировка не найдена в файле')
 
-                f.close()
-                return
+        print('Загружена группировка ' + nameCode)
 
-        f.close()
-        raise Exception('Группировка не найдена в файле')
+        self.groups = list(map(lambda w: WalkerGroup(*w), constellationData['Walkers']))
+        self.totalSatCount = sum(map(lambda g: g.getTotalSatCount(), self.groups))
+
+        return None
 
     def getInitialState(self):
+        assert self.elements is None, 'use loadFromConfig first'
+
         self.elements = np.zeros((self.totalSatCount, 6))
         shift = 0
 

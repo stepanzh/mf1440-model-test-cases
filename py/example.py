@@ -1,12 +1,30 @@
 #!/usr/bin/env python3
 
+USAGE = """
+usage:    ./example.py satellite-index epoch-index
+example:  ./example.py 87 912
+"""
+
 from constellation import Constellation
 import numpy as np
 from random import randint
 import sys
 
 
-def main(args):
+def main(argv):
+    # TODO. Use argparse.
+    try:
+        satIdx = int(sys.argv[1])
+        epochIdx = int(sys.argv[2])
+    except ValueError:
+        print('indexes must be ints', file=sys.stderr)
+        print(USAGE)
+        return None
+    except IndexError:
+        print('miss parameter(s)', file=sys.stderr)
+        print(USAGE)
+        return None
+
     constellation = Constellation('Starlink')
 
     # вычисление элементов орбиты для всех КА в начальный момент
@@ -17,10 +35,6 @@ def main(args):
 
     # расчёт положений всех КА в заданные моменты времени
     constellation.propagateJ2(epochs)
-
-    # Координаты случайного КА (в инерциальных осях) после этого можно прочитать из constellation.stateEci
-    satIdx = randint(0, constellation.totalSatCount - 1)
-    epochIdx = randint(0, len(epochs) - 1)
 
     print('Положение КА-' + str(satIdx) + ' на эпоху ' + str(epochs[epochIdx]) + ':')
     print(constellation.stateEci[satIdx, :, epochIdx])

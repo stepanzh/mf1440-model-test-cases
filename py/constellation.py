@@ -112,12 +112,18 @@ class Constellation:
         raan0 = self.elements[:, 3]
         aol0 = self.elements[:, 5]
 
-        raanPrecessionRate = -1.5 * (Const.earthJ2 * np.sqrt(Const.earthGM) * Const.earthRadius**2) \
-                           / (sma**(7/2)) * np.cos(inclination)
+        raanPrecessionRate = (
+                -1.5 * (
+                    Const.earthJ2 * np.sqrt(Const.earthGM) * Const.earthRadius**2
+                ) / (sma**(7/2))
+                * np.cos(inclination)
+        )
 
-        draconicOmega      = np.sqrt(Const.earthGM / sma**3) \
-                           * (1 - 1.5 * Const.earthJ2 * (Const.earthRadius / sma)**2) \
-                           * (1 - 4 * np.cos(inclination)**2)
+        draconicOmega = (
+            np.sqrt(Const.earthGM / sma**3)
+            * (1 - 1.5 * Const.earthJ2 * (Const.earthRadius / sma)**2)
+            * (1 - 4 * np.cos(inclination)**2)
+        )
 
         for epoch in epochs:
             aol = aol0 + epoch * draconicOmega

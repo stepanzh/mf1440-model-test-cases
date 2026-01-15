@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from constellation import *
 from random import randint
 

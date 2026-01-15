@@ -56,6 +56,9 @@ class WalkerGroup(Walker):
 
 class Constellation:
 
+    # TODO. Deprecate name code -> pass to data to constructor.
+    # like (self, count, groups, elements, state_eci)
+
     def __init__(self, nameCode):
         self.totalSatCount = 0
         self.groups   = []
@@ -63,8 +66,12 @@ class Constellation:
         self.stateEci = []
         self.loadFromConfig(nameCode)
 
+    # TODO. Not pure. Better to have loader of Constellation from Json.
+    # like
+    #   constellation = ConstellationJsonLoader(data_dir).create_from_code(code)
+
     def loadFromConfig(self, nameCode):
-        f = open('ConstellationsTest.json')
+        f = open('../ConstellationsTest.json')
         jsonData = json.loads(f.read())
 
         for entryIdx in range(len(jsonData)):

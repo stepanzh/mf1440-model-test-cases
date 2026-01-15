@@ -3,18 +3,20 @@ import json
 from typing import NamedTuple
 
 
+# TODO. Why not dataclass?
+# FIX. Singleton.
 class Parameters(object):
     pass
 
 
+# TODO. It's better to keep unit in variable name.
 Const = Parameters()
 Const.earthRadius = 6378135      # Экваториальный радиус Земли [m]
 Const.earthGM = 3.986004415e+14  # Гравитационный параметр Земли [m3/s2]
 Const.earthJ2 = 1.082626e-3      # Вторая зональная гармоника геопотенциала
 
-group = Parameters()
 
-
+# TODO. Why not dataclass?
 class Walker(NamedTuple):
     inclination: float           # наклонение орбиты
     satsPerPlane: int            # число КА в каждой орбитальной плоскости группы

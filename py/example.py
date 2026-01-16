@@ -7,6 +7,7 @@ example:  ./example.py 87 912
 
 from constellation import Constellation
 import numpy as np
+import pathlib
 from random import randint
 import sys
 
@@ -25,19 +26,15 @@ def main(argv):
         print(USAGE)
         return None
 
-    constellation = Constellation('Starlink')
-
-    # вычисление элементов орбиты для всех КА в начальный момент
-    constellation.getInitialState()
+    constellation = Constellation.createFromJson(pathlib.Path('../constellationsTest.json'), 'Starlink')
 
     # определение точек на оси времени, в которые будут проихзводиться расчёты
     epochs = list(range(1002))
 
-    # расчёт положений всех КА в заданные моменты времени
-    constellation.propagateJ2(epochs)
+    stateEci = constellation.propagateJ2(epochs)
 
     print('Положение КА-' + str(satIdx) + ' на эпоху ' + str(epochs[epochIdx]) + ':')
-    print(constellation.stateEci[satIdx, :, epochIdx])
+    print(stateEci[satIdx, :, epochIdx])
 
 
 if __name__ == '__main__':

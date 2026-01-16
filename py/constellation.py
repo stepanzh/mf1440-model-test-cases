@@ -9,7 +9,7 @@ class Parameters(object):
     pass
 
 
-# TODO. It's better to keep unit in variable name.
+# TODO. It's better to keep unit in variable name or use unitful values (e.g. like in Unitful.jl).
 Const = Parameters()
 Const.earthRadius = 6378135      # Экваториальный радиус Земли [m]
 Const.earthGM = 3.986004415e+14  # Гравитационный параметр Земли [m3/s2]
@@ -56,30 +56,21 @@ class WalkerGroup(Walker):
         return elements
 
 
+# TODO. Should be dataclass + builder from groups?
 class Constellation:
+    def __init__(self, groups):
+        self.groups = groups
+        self.totalSatCount = Constellation.countSatellitesTotal(groups)
+        self.elements = Constellation._initializeOrbitElements(groups, self.totalSatCount)
 
-    # TODO. Deprecate name code -> pass to data to constructor.
-    # like (self, count, groups, elements, state_eci)
+    @classmethod
+    def countSatellitesTotal(cls, groups):
+        return sum(map(lambda g: g.getTotalSatCount(), groups))
 
-    def __init__(self, nameCode):
-        # TODO. Why below are lists? Why not numpy arrays?
-
-        self.groups = None
-        self.totalSatCount = 0  # NOTE. Should be property based on self.groups
-
-        self.elements = None
-        self.stateEci = None
-
-        self.loadFromConfig(nameCode)
-
-    # TODO. Not pure. Better to have loader of Constellation from Json.
-    # like
-    #   constellation = ConstellationJsonLoader(data_dir).create_from_code(code)
-
-    def loadFromConfig(self, nameCode: str):
-        assert self.groups is None, 'group of satellites was already loaded'
-
-        with open('../ConstellationsTest.json') as io:
+    # NOTE. Consider to use loader class (DI) and/or constructor from dictionary.
+    @classmethod
+    def createFromJson(cls, path, nameCode: str):
+        with open(path) as io:
             jsonData = json.load(io)
 
         # Find first occurrence of constellation with nameCode
@@ -90,24 +81,31 @@ class Constellation:
 
         print('Загружена группировка ' + nameCode)
 
-        self.groups = list(map(lambda w: WalkerGroup(*w), constellationData['Walkers']))
-        self.totalSatCount = sum(map(lambda g: g.getTotalSatCount(), self.groups))
+        groups = list(map(lambda w: WalkerGroup(*w), constellationData['Walkers']))
 
-        return None
+        return Constellation(groups)
 
-    def getInitialState(self):
-        assert self.elements is None, 'use loadFromConfig first'
+    @classmethod
+    def _initializeOrbitElements(cls, groups, totalSatCount = None):
+        "вычисление элементов орбиты для всех КА в начальный момент"
 
-        self.elements = np.zeros((self.totalSatCount, 6))
+        if totalSatCount is None:
+            totalSatCount = cls.countSatellitesTotal(groups)
+
+        elements = np.zeros((totalSatCount, 6))
         shift = 0
 
-        for singleGroup in self.groups:
-            ending = shift + singleGroup.getTotalSatCount()
-            self.elements[shift:ending, :] = singleGroup.getInitialElements()
+        for group in groups:
+            ending = shift + group.getTotalSatCount()
+            elements[shift:ending, :] = group.getInitialElements()
             shift = ending
 
-    def propagateJ2(self, epochs):
-        self.stateEci = np.zeros((self.totalSatCount, 3, len(epochs)))
+        return elements
+
+    def propagateJ2(self, epochs, constants: Parameters = Const):
+        "расчёт положений всех КА в заданные моменты времени"
+
+        stateEci = np.zeros((self.totalSatCount, 3, len(epochs)))
 
         inclination = self.elements[:, 4]
         sma = self.elements[:, 0]
@@ -116,14 +114,14 @@ class Constellation:
 
         raanPrecessionRate = (
                 -1.5 * (
-                    Const.earthJ2 * np.sqrt(Const.earthGM) * Const.earthRadius**2
+                    constants.earthJ2 * np.sqrt(constants.earthGM) * constants.earthRadius**2
                 ) / (sma**(7/2))
                 * np.cos(inclination)
         )
 
         draconicOmega = (
-            np.sqrt(Const.earthGM / sma**3)
-            * (1 - 1.5 * Const.earthJ2 * (Const.earthRadius / sma)**2)
+            np.sqrt(constants.earthGM / sma**3)
+            * (1 - 1.5 * constants.earthJ2 * (constants.earthRadius / sma)**2)
             * (1 - 4 * np.cos(inclination)**2)
         )
 
@@ -134,6 +132,9 @@ class Constellation:
             epochState = sma * [
                 (np.cos(aol) * np.cos(raanOmega) - np.sin(aol) * np.cos(inclination) * np.sin(raanOmega)),
                 (np.cos(aol) * np.sin(raanOmega) + np.sin(aol) * np.cos(inclination) * np.cos(raanOmega)),
-                (np.sin(aol) * np.sin(inclination))]
+                (np.sin(aol) * np.sin(inclination))
+            ]
 
-            self.stateEci[:, :, epochs.index(epoch)] = np.array(epochState).T
+            stateEci[:, :, epochs.index(epoch)] = np.array(epochState).T
+
+        return stateEci

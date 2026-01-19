@@ -44,7 +44,30 @@
   - `figs/` сами картинки
   - `notebooks/` - черновики по ресерчу того, что происходит
 
+Для установки
+
+```console
+➜  py git:(master) python3 -m venv venv
+➜  py git:(master) source venv/bin/activate
+(venv) ➜  py git:(master) python3 -m pip install -r requirements.txt
+
+(venv) ➜  py git:(master) chmod +x example.py
+(venv) ➜  py git:(master) ./example.py
+miss parameter(s)
+
+usage:    ./example.py satellite-index epoch-index
+example:  ./example.py 87 912
+
+(venv) ➜  py git:(master) diff <(./example.py 87 912) <(cat example-87-912.txt)
+```
+
 ## Задание 1
+
+```
+(venv) ➜  py git:(master) chmod +x task.py task-figs.py
+(venv) ➜  py git:(master) ./task.py
+(venv) ➜  py git:(master) ./task-figs.py
+```
 
 Пример в `if __name__: ...` назначает спутникам в заданный момент времени (`epochIdx`) частоты из пула частот так, чтобы два соседя работали на разных частотах.
 

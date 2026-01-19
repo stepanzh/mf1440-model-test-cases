@@ -25,8 +25,6 @@
     6. Map zones to radio frequencies
 """
 
-# TODO. Комменты перевести?
-
 import abc
 import constellation
 from constellation import Const

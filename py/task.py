@@ -27,7 +27,6 @@
 
 import abc
 import constellation
-from constellation import Const
 import gcol
 import logging
 import networkx
@@ -37,7 +36,7 @@ import scipy
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -110,7 +109,7 @@ class NodeKColorer(abc.ABC):
 
 class GcolKNodeColorer(NodeKColorer):
     def color(self, graph, k):
-        coloring = gcol.node_k_coloring(G, k)
+        coloring = gcol.node_k_coloring(graph, k)
         logger.debug(f'DONE: coloring')
         return coloring
 
@@ -151,15 +150,15 @@ class SatelliteFrequenceMap(dict):
 
 
 if __name__ == '__main__':
-    constellation = constellation.Constellation.createFromJson(pathlib.Path('../constellationsTest.json'), 'Starlink')
+    constellation_ = constellation.Constellation.createFromJson(pathlib.Path('../constellationsTest.json'), 'Starlink')
     epochs = list(range(1002))
-    stateEci = constellation.propagateJ2(epochs)
+    stateEci = constellation_.propagateJ2(epochs)
     satIdx, epochIdx = 87, 912
 
     satellitePositions = stateEci[:, :, epochIdx]
     logger.debug(f'satellite position s/t/x/y/z = {satIdx} / {epochIdx} / {stateEci[satIdx, :, epochIdx]}')
 
-    G = SatelliteShadowsGraph.createFromCosmosPositions(satellitePositions, earthRadius=Const.earthRadius)
+    G = SatelliteShadowsGraph.createFromCosmosPositions(satellitePositions, earthRadius=constellation.Const.earthRadius)
 
     frequencyPool = [11, 12, 13, 14, 15, 16]
     freqMap = SatelliteFrequenceMap.createFromFrequencyList(
